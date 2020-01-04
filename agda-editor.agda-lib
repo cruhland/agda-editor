@@ -1,0 +1,3 @@
+name: agda-editor
+depend: standard-library
+include: src

@@ -114,10 +114,12 @@ postulate
 {-# COMPILE GHC withoutMode = withoutMode #-}
 {-# COMPILE GHC fdWrite = fdWrite #-}
 
+setAttrs : TerminalAttributes → IO ⊤
+setAttrs attrs = setTerminalAttributes stdInput attrs immediately
+
 clearScreen : TerminalAttributes → IO ⊤
 clearScreen attrs = do
-  let rawModeAttrs = withoutMode attrs processInput
-  _ ← setTerminalAttributes stdInput rawModeAttrs immediately
+  _ ← setAttrs (withoutMode attrs processInput)
   _ ← fdWrite stdInput (toList "\^[[2J")
   return tt
 
@@ -125,7 +127,4 @@ main : IO ⊤
 main = do
   isTty ← queryTerminal stdInput
   _ ← if isTty then return tt else exitFailure
-  bracket
-    (getTerminalAttributes stdInput)
-    (λ attrs → setTerminalAttributes stdInput attrs immediately)
-    clearScreen
+  bracket (getTerminalAttributes stdInput) setAttrs clearScreen

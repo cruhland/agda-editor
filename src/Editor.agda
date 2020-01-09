@@ -106,9 +106,13 @@ readTimeout = 0
 
 readMinChars :: Int
 readMinChars = 1
+
+readMaxChars :: ByteCount
+readMaxChars = 1024
 #-}
 
 postulate
+  _,_ : Set → Set → Set
   ByteCount : Set
   Fd : Set
   TerminalAttributes : Set
@@ -117,6 +121,7 @@ postulate
   exitFailure : IO ⊤
   exitSuccess : IO ⊤
 
+  stdInput : Fd
   stdOutput : Fd
   queryTerminal : Fd → IO Bool
   getTerminalAttributes : Fd → IO TerminalAttributes
@@ -128,8 +133,11 @@ postulate
   minInput : TerminalAttributes → Int
   withMinInput : TerminalAttributes → Int → TerminalAttributes
   readMinChars : Int
+  readMaxChars : ByteCount
+  fdRead : Fd → ByteCount → IO (List Char , ByteCount)
   fdWrite : Fd → List Char → IO ByteCount
 
+{-# COMPILE GHC _,_ = type (,) #-}
 {-# COMPILE GHC ByteCount = type ByteCount #-}
 {-# COMPILE GHC Fd = type Fd #-}
 {-# COMPILE GHC TerminalAttributes = type TerminalAttributes #-}
@@ -138,6 +146,7 @@ postulate
 {-# COMPILE GHC exitFailure = exitFailure #-}
 {-# COMPILE GHC exitSuccess = exitSuccess #-}
 
+{-# COMPILE GHC stdInput = stdInput #-}
 {-# COMPILE GHC stdOutput = stdOutput #-}
 {-# COMPILE GHC queryTerminal = queryTerminal #-}
 {-# COMPILE GHC getTerminalAttributes = getTerminalAttributes #-}
@@ -149,6 +158,8 @@ postulate
 {-# COMPILE GHC minInput = minInput #-}
 {-# COMPILE GHC withMinInput = withMinInput #-}
 {-# COMPILE GHC readMinChars = readMinChars #-}
+{-# COMPILE GHC readMaxChars = readMaxChars #-}
+{-# COMPILE GHC fdRead = fdRead #-}
 {-# COMPILE GHC fdWrite = fdWrite #-}
 
 setAttrs : TerminalAttributes → IO ⊤
@@ -170,11 +181,16 @@ printAttrs attrs = do
   _ ← fdWrite stdOutput (formatField "minInput" (minInput attrs))
   return tt
 
+mainLoop : IO ⊤
+mainLoop = do
+  _ ← fdRead stdInput readMaxChars
+  return tt
+
 setupAndRun : TerminalAttributes → IO ⊤
 setupAndRun attrs = do
   _ ← setAttrs (attrUpdates attrs)
   _ ← fdWrite stdOutput (toList "\^[[2J")
-  return tt
+  mainLoop
 
 main : IO ⊤
 main = do

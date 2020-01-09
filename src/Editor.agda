@@ -6,6 +6,7 @@ open import Data.Char
 open import Data.List
 open import Data.String hiding (_++_)
 open import Data.Unit
+open import Function
 
 {-# FOREIGN GHC import Control.Exception #-}
 {-# FOREIGN GHC import Data.Int #-}
@@ -99,6 +100,14 @@ data TerminalMode : Set where
   )
 #-}
 
+{-# FOREIGN GHC
+readTimeout :: Int
+readTimeout = 0
+
+readMinChars :: Int
+readMinChars = 1
+#-}
+
 postulate
   ByteCount : Set
   Fd : Set
@@ -114,7 +123,11 @@ postulate
   setTerminalAttributes : Fd → TerminalAttributes → TerminalState → IO ⊤
   withoutMode : TerminalAttributes → TerminalMode → TerminalAttributes
   inputTime : TerminalAttributes → Int
+  withTime : TerminalAttributes → Int → TerminalAttributes
+  readTimeout : Int
   minInput : TerminalAttributes → Int
+  withMinInput : TerminalAttributes → Int → TerminalAttributes
+  readMinChars : Int
   fdWrite : Fd → List Char → IO ByteCount
 
 {-# COMPILE GHC ByteCount = type ByteCount #-}
@@ -131,17 +144,21 @@ postulate
 {-# COMPILE GHC setTerminalAttributes = setTerminalAttributes #-}
 {-# COMPILE GHC withoutMode = withoutMode #-}
 {-# COMPILE GHC inputTime = inputTime #-}
+{-# COMPILE GHC withTime = withTime #-}
+{-# COMPILE GHC readTimeout = readTimeout #-}
 {-# COMPILE GHC minInput = minInput #-}
+{-# COMPILE GHC withMinInput = withMinInput #-}
+{-# COMPILE GHC readMinChars = readMinChars #-}
 {-# COMPILE GHC fdWrite = fdWrite #-}
 
 setAttrs : TerminalAttributes → IO ⊤
 setAttrs attrs = setTerminalAttributes stdOutput attrs immediately
 
-clearScreen : TerminalAttributes → IO ⊤
-clearScreen attrs = do
-  _ ← setAttrs (withoutMode attrs processInput)
-  _ ← fdWrite stdOutput (toList "\^[[2J")
-  return tt
+attrUpdates : TerminalAttributes → TerminalAttributes
+attrUpdates =
+  (flip withoutMode processInput)
+  ∘ (flip withTime readTimeout)
+  ∘ (flip withMinInput readMinChars)
 
 formatField : String → Int → List Char
 formatField name value =
@@ -155,8 +172,9 @@ printAttrs attrs = do
 
 setupAndRun : TerminalAttributes → IO ⊤
 setupAndRun attrs = do
-  _ ← clearScreen attrs
-  printAttrs attrs
+  _ ← setAttrs (attrUpdates attrs)
+  _ ← fdWrite stdOutput (toList "\^[[2J")
+  return tt
 
 main : IO ⊤
 main = do

@@ -121,6 +121,9 @@ postulate
   exitFailure : IO ⊤
   exitSuccess : IO ⊤
 
+  fst : {A B : Set} → (A , B) → A
+  snd : {A B : Set} → (A , B) → B
+
   stdInput : Fd
   stdOutput : Fd
   queryTerminal : Fd → IO Bool
@@ -142,9 +145,12 @@ postulate
 {-# COMPILE GHC Fd = type Fd #-}
 {-# COMPILE GHC TerminalAttributes = type TerminalAttributes #-}
 
-{-# COMPILE GHC bracket = \ _ _ _ a r x -> bracket a r x #-}
+{-# COMPILE GHC bracket = \ _ _ _ -> bracket #-}
 {-# COMPILE GHC exitFailure = exitFailure #-}
 {-# COMPILE GHC exitSuccess = exitSuccess #-}
+
+{-# COMPILE GHC fst = \ _ _ -> fst #-}
+{-# COMPILE GHC snd = \ _ _ -> snd #-}
 
 {-# COMPILE GHC stdInput = stdInput #-}
 {-# COMPILE GHC stdOutput = stdOutput #-}
@@ -182,10 +188,18 @@ printAttrs attrs = do
   _ ← fdWrite stdOutput (formatField "minInput" (minInput attrs))
   return tt
 
+handleInput : String → IO Bool
+handleInput "q" = return false
+handleInput cs = do
+  _ ← fdWrite stdOutput (toList cs)
+  return true
+
+{-# NON_TERMINATING #-}
 mainLoop : IO ⊤
 mainLoop = do
-  _ ← fdRead stdInput readMaxChars
-  return tt
+  textAndLength ← fdRead stdInput readMaxChars
+  continue ← handleInput (fromList (fst textAndLength))
+  if continue then mainLoop else return tt
 
 setupAndRun : TerminalAttributes → IO ⊤
 setupAndRun attrs = do

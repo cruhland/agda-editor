@@ -168,6 +168,7 @@ setAttrs attrs = setTerminalAttributes stdOutput attrs immediately
 attrUpdates : TerminalAttributes → TerminalAttributes
 attrUpdates =
   (flip withoutMode processInput)
+  ∘ (flip withoutMode enableEcho)
   ∘ (flip withTime readTimeout)
   ∘ (flip withMinInput readMinChars)
 

@@ -2,33 +2,19 @@ module Editor where
 
 open import BasicIO
 open import Data.Bool
-open import Data.Char
-open import Data.List
-open import Data.String hiding (_++_)
+open import Data.Char hiding (show)
+open import Data.List hiding (_++_)
+open import Data.String hiding (show)
 open import Data.Unit
 open import Function
+open import Int
+open import Show
 
 {-# FOREIGN GHC import Control.Exception #-}
-{-# FOREIGN GHC import Data.Int #-}
 {-# FOREIGN GHC import System.Exit #-}
 {-# FOREIGN GHC import System.Posix.IO #-}
 {-# FOREIGN GHC import System.Posix.Terminal #-}
 {-# FOREIGN GHC import System.Posix.Types #-}
-
-{-# FOREIGN GHC data ShowDict a = Show a => ShowDict #-}
-postulate
-  Show : Set → Set
-{-# COMPILE GHC Show = type ShowDict #-}
-
-postulate
-  haskell-show : {a : Set} {{_ : Show a}} → a → List Char
-{-# COMPILE GHC haskell-show = \ _ ShowDict -> show #-}
-
-postulate
-  Int : Set
-  instance ShowInt : Show Int
-{-# COMPILE GHC Int = type Int #-}
-{-# COMPILE GHC ShowInt = ShowDict #-}
 
 data TerminalState : Set where
   immediately : TerminalState
@@ -179,8 +165,7 @@ attrUpdates =
   ∘ (flip withMinInput readMinChars)
 
 formatField : String → Int → List Char
-formatField name value =
-  toList name ++ toList " = " ++ haskell-show value ++ toList "\n"
+formatField name value = toList (name ++ " = " ++ show value ++ "\n")
 
 printAttrs : TerminalAttributes → IO ⊤
 printAttrs attrs = do

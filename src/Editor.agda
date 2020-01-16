@@ -1,5 +1,6 @@
 module Editor where
 
+open import Agda.Builtin.FromNat
 open import BasicIO
 open import Data.Bool
 open import Data.Char hiding (show)
@@ -16,13 +17,13 @@ open import Terminal
 {-# FOREIGN GHC import System.Posix.IO #-}
 {-# FOREIGN GHC import System.Posix.Types #-}
 
-{-# FOREIGN GHC
-readTimeout :: Int
+readTimeout : Int
 readTimeout = 0
 
-readMinChars :: Int
+readMinChars : Int
 readMinChars = 1
 
+{-# FOREIGN GHC
 readMaxChars :: ByteCount
 readMaxChars = 1024
 #-}
@@ -34,8 +35,6 @@ postulate
 
   stdInput : Fd
   stdOutput : Fd
-  readTimeout : Int
-  readMinChars : Int
   readMaxChars : ByteCount
 
 {-# COMPILE GHC bracket = \ _ _ _ -> bracket #-}
@@ -44,8 +43,6 @@ postulate
 
 {-# COMPILE GHC stdInput = stdInput #-}
 {-# COMPILE GHC stdOutput = stdOutput #-}
-{-# COMPILE GHC readTimeout = readTimeout #-}
-{-# COMPILE GHC readMinChars = readMinChars #-}
 {-# COMPILE GHC readMaxChars = readMaxChars #-}
 
 setAttrs : TerminalAttributes → IO ⊤

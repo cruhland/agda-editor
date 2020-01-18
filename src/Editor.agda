@@ -47,16 +47,6 @@ postulate
 {-# COMPILE GHC stdInput = stdInput #-}
 {-# COMPILE GHC stdOutput = stdOutput #-}
 
-setAttrs : TerminalAttributes → IO ⊤
-setAttrs attrs = setTerminalAttributes stdOutput attrs immediately
-
-attrUpdates : TerminalAttributes → TerminalAttributes
-attrUpdates =
-  (flip withoutMode processInput)
-  ∘ (flip withoutMode enableEcho)
-  ∘ (flip withTime readTimeout)
-  ∘ (flip withMinInput readMinChars)
-
 formatField : String → Int → List Char
 formatField name value = toList (name ++ " = " ++ show value ++ "\n")
 
@@ -65,6 +55,26 @@ printAttrs attrs = do
   _ ← fdWrite stdOutput (formatField "inputTime" (inputTime attrs))
   _ ← fdWrite stdOutput (formatField "minInput" (minInput attrs))
   return tt
+
+withUpdatedAttributes :
+  {A : Set} → (TerminalAttributes → TerminalAttributes) → IO A → IO A
+withUpdatedAttributes {A} updateFn actions =
+  bracket (getTerminalAttributes stdOutput) setAttrs updateAndRun
+    where
+      setAttrs : TerminalAttributes → IO ⊤
+      setAttrs attrs = setTerminalAttributes stdOutput attrs immediately
+
+      updateAndRun : TerminalAttributes → IO A
+      updateAndRun attrs = do
+        _ ← setAttrs (updateFn attrs)
+        actions
+
+attrUpdates : TerminalAttributes → TerminalAttributes
+attrUpdates =
+  (flip withoutMode processInput)
+  ∘ (flip withoutMode enableEcho)
+  ∘ (flip withTime readTimeout)
+  ∘ (flip withMinInput readMinChars)
 
 handleInput : String → IO Bool
 handleInput "q" = return false
@@ -79,9 +89,8 @@ mainLoop = do
   continue ← handleInput (fromList (fst textAndLength))
   if continue then mainLoop else return tt
 
-setupAndRun : TerminalAttributes → IO ⊤
-setupAndRun attrs = do
-  _ ← setAttrs (attrUpdates attrs)
+setupAndRun : IO ⊤
+setupAndRun = do
   _ ← fdWrite stdOutput (toList "\^[[2J")
   mainLoop
 
@@ -89,4 +98,4 @@ main : IO ⊤
 main = do
   isTty ← queryTerminal stdOutput
   _ ← if isTty then return tt else exitFailure
-  bracket (getTerminalAttributes stdOutput) setAttrs setupAndRun
+  withUpdatedAttributes attrUpdates setupAndRun

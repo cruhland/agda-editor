@@ -5,6 +5,7 @@ open import Data.Bool
 open import Data.Char
 open import Data.List
 open import Data.Unit
+open import ByteCount
 open import Int
 
 {-# FOREIGN GHC import System.Posix.IO #-}
@@ -83,7 +84,6 @@ data TerminalMode : Set where
 
 postulate
   _,_ : Set → Set → Set
-  ByteCount : Set
   Fd : Set
   TerminalAttributes : Set
 
@@ -102,7 +102,6 @@ postulate
   fdWrite : Fd → List Char → IO ByteCount
 
 {-# COMPILE GHC _,_ = type (,) #-}
-{-# COMPILE GHC ByteCount = type ByteCount #-}
 {-# COMPILE GHC Fd = type Fd #-}
 {-# COMPILE GHC TerminalAttributes = type TerminalAttributes #-}
 

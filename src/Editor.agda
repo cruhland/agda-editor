@@ -1,12 +1,16 @@
 module Editor where
 
 open import Agda.Builtin.FromNat
+open import Agda.Builtin.Word
 open import BasicIO
 open import Data.Bool
 open import Data.Char hiding (show)
 open import Data.List hiding (_++_)
+open import Data.Nat
+open import Data.Nat.Literals
 open import Data.String hiding (show)
 open import Data.Unit
+open import ByteCount
 open import Function
 open import Int
 open import Show
@@ -15,7 +19,6 @@ open import Terminal
 {-# FOREIGN GHC import Control.Exception #-}
 {-# FOREIGN GHC import System.Exit #-}
 {-# FOREIGN GHC import System.Posix.IO #-}
-{-# FOREIGN GHC import System.Posix.Types #-}
 
 readTimeout : Int
 readTimeout = 0
@@ -23,10 +26,11 @@ readTimeout = 0
 readMinChars : Int
 readMinChars = 1
 
-{-# FOREIGN GHC
-readMaxChars :: ByteCount
-readMaxChars = 1024
-#-}
+instance numberℕ : Number ℕ
+numberℕ = number
+
+readMaxChars : ByteCount
+readMaxChars = mkCSize (primWord64FromNat 1024)
 
 postulate
   bracket : {A B C : Set} → IO A → (A → IO B) → (A → IO C) → IO C
@@ -35,7 +39,6 @@ postulate
 
   stdInput : Fd
   stdOutput : Fd
-  readMaxChars : ByteCount
 
 {-# COMPILE GHC bracket = \ _ _ _ -> bracket #-}
 {-# COMPILE GHC exitFailure = exitFailure #-}
@@ -43,7 +46,6 @@ postulate
 
 {-# COMPILE GHC stdInput = stdInput #-}
 {-# COMPILE GHC stdOutput = stdOutput #-}
-{-# COMPILE GHC readMaxChars = readMaxChars #-}
 
 setAttrs : TerminalAttributes → IO ⊤
 setAttrs attrs = setTerminalAttributes stdOutput attrs immediately

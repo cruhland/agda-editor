@@ -40,14 +40,20 @@ postulate
 {-# COMPILE GHC stdInput = stdInput #-}
 {-# COMPILE GHC stdOutput = stdOutput #-}
 
-formatField : String → Int → List Char
-formatField name value = toList (name ++ " = " ++ show value ++ "\n")
+termRead : IO String
+termRead = fdRead stdInput readMaxChars >>= (return ∘ fromList ∘ fst)
+
+termWrite : String → IO ByteCount
+termWrite = fdWrite stdOutput ∘ toList
 
 printAttrs : TerminalAttributes → IO ⊤
-printAttrs attrs = do
-  _ ← fdWrite stdOutput (formatField "inputTime" (inputTime attrs))
-  _ ← fdWrite stdOutput (formatField "minInput" (minInput attrs))
-  return tt
+printAttrs attrs =
+  do _ ← termWrite (formatField "inputTime" (inputTime attrs))
+     _ ← termWrite (formatField "minInput" (minInput attrs))
+     return tt
+  where
+    formatField : String → Int → String
+    formatField name value = name ++ " = " ++ show value ++ "\n"
 
 withUpdatedAttributes :
   {A : Set} → (TerminalAttributes → TerminalAttributes) → IO A → IO A
@@ -71,21 +77,17 @@ attrUpdates =
 
 handleInput : String → IO Bool
 handleInput "q" = return false
-handleInput cs = do
-  _ ← fdWrite stdOutput (toList cs)
-  return true
+handleInput cs = termWrite cs >>= const (return true)
 
 {-# NON_TERMINATING #-}
 mainLoop : IO ⊤
 mainLoop = do
-  textAndLength ← fdRead stdInput readMaxChars
-  continue ← handleInput (fromList (fst textAndLength))
+  input ← termRead
+  continue ← handleInput input
   if continue then mainLoop else return tt
 
 setupAndRun : IO ⊤
-setupAndRun = do
-  _ ← fdWrite stdOutput (toList "\^[[2J")
-  mainLoop
+setupAndRun = termWrite "\^[[2J" >>= const mainLoop
 
 main : IO ⊤
 main = withUpdatedAttributes attrUpdates setupAndRun

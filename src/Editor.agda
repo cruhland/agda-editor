@@ -17,7 +17,6 @@ open import Show
 open import Terminal
 
 {-# FOREIGN GHC import Control.Exception #-}
-{-# FOREIGN GHC import System.Exit #-}
 {-# FOREIGN GHC import System.Posix.IO #-}
 
 readTimeout : Int
@@ -34,16 +33,10 @@ readMaxChars = mkCSize (primWord64FromNat 1024)
 
 postulate
   bracket : {A B C : Set} → IO A → (A → IO B) → (A → IO C) → IO C
-  exitFailure : IO ⊤
-  exitSuccess : IO ⊤
-
   stdInput : Fd
   stdOutput : Fd
 
 {-# COMPILE GHC bracket = \ _ _ _ -> bracket #-}
-{-# COMPILE GHC exitFailure = exitFailure #-}
-{-# COMPILE GHC exitSuccess = exitSuccess #-}
-
 {-# COMPILE GHC stdInput = stdInput #-}
 {-# COMPILE GHC stdOutput = stdOutput #-}
 
@@ -95,7 +88,4 @@ setupAndRun = do
   mainLoop
 
 main : IO ⊤
-main = do
-  isTty ← queryTerminal stdOutput
-  _ ← if isTty then return tt else exitFailure
-  withUpdatedAttributes attrUpdates setupAndRun
+main = withUpdatedAttributes attrUpdates setupAndRun

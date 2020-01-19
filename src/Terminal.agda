@@ -131,6 +131,12 @@ postulate
 clearScreen : String
 clearScreen = "\^[[2J"
 
+showCursor : String
+showCursor = "\^[[?25h"
+
+hideCursor : String
+hideCursor = "\^[[?25l"
+
 altScreenEnable : String
 altScreenEnable = "\^[[?1049h"
 

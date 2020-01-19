@@ -36,8 +36,8 @@ mainLoop = do
 setupAndRun : IO ⊤
 setupAndRun =
   bracket
-    (termWrite altScreenEnable >> return tt)
-    (const (termWrite altScreenDisable))
+    (termWrite (hideCursor ++ altScreenEnable) >> return tt)
+    (const (termWrite (altScreenDisable ++ showCursor)))
     (const mainLoop)
 
 main : IO ⊤

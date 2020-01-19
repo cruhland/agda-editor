@@ -131,6 +131,12 @@ postulate
 clearScreen : String
 clearScreen = "\^[[2J"
 
+altScreenEnable : String
+altScreenEnable = "\^[[?1049h"
+
+altScreenDisable : String
+altScreenDisable = "\^[[?1049l"
+
 withUpdatedAttributes :
   {A : Set} → (TerminalAttributes → TerminalAttributes) → IO A → IO A
 withUpdatedAttributes {A} updateFn actions =

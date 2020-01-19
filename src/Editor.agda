@@ -34,7 +34,11 @@ mainLoop = do
   if continue then mainLoop else return tt
 
 setupAndRun : IO ⊤
-setupAndRun = termWrite clearScreen >>= const mainLoop
+setupAndRun =
+  bracket
+    (termWrite altScreenEnable >> return tt)
+    (const (termWrite altScreenDisable))
+    (const mainLoop)
 
 main : IO ⊤
 main = withUpdatedAttributes attrUpdates setupAndRun

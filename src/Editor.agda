@@ -41,8 +41,8 @@ mainLoop = do
 
 setupAndRun : IO ⊤
 setupAndRun = do
-  args <- getArgs
-  path <- parsePath args
+  args ← getArgs
+  path ← parsePath args
   bracket
     (termWrite (hideCursor ++ altScreenEnable) >> return tt)
     (const (termWrite (altScreenDisable ++ showCursor)))

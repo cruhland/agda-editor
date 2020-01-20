@@ -13,7 +13,6 @@ open import Function
 open import Pair
 open import Show
 
-{-# FOREIGN GHC import Control.Exception #-}
 {-# FOREIGN GHC import System.Posix.IO #-}
 {-# FOREIGN GHC import System.Posix.Terminal #-}
 {-# FOREIGN GHC import System.Posix.Types #-}
@@ -92,8 +91,6 @@ postulate
   Fd : Set
   TerminalAttributes : Set
 
-  bracket : {A B C : Set} → IO A → (A → IO B) → (A → IO C) → IO C
-
   stdInput : Fd
   stdOutput : Fd
   getTerminalAttributes : Fd → IO TerminalAttributes
@@ -108,8 +105,6 @@ postulate
 
 {-# COMPILE GHC Fd = type Fd #-}
 {-# COMPILE GHC TerminalAttributes = type TerminalAttributes #-}
-
-{-# COMPILE GHC bracket = \ _ _ _ -> bracket #-}
 
 {-# COMPILE GHC stdInput = stdInput #-}
 {-# COMPILE GHC stdOutput = stdOutput #-}

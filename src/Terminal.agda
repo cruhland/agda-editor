@@ -10,6 +10,7 @@ open import Data.Unit
 open import ByteCount
 open import Int
 open import Function
+open import Pair
 open import Show
 
 {-# FOREIGN GHC import Control.Exception #-}
@@ -88,13 +89,10 @@ data TerminalMode : Set where
 #-}
 
 postulate
-  _,_ : Set → Set → Set
   Fd : Set
   TerminalAttributes : Set
 
   bracket : {A B C : Set} → IO A → (A → IO B) → (A → IO C) → IO C
-  fst : {A B : Set} → (A , B) → A
-  snd : {A B : Set} → (A , B) → B
 
   stdInput : Fd
   stdOutput : Fd
@@ -108,13 +106,10 @@ postulate
   fdRead : Fd → ByteCount → IO (List Char , ByteCount)
   fdWrite : Fd → List Char → IO ByteCount
 
-{-# COMPILE GHC _,_ = type (,) #-}
 {-# COMPILE GHC Fd = type Fd #-}
 {-# COMPILE GHC TerminalAttributes = type TerminalAttributes #-}
 
 {-# COMPILE GHC bracket = \ _ _ _ -> bracket #-}
-{-# COMPILE GHC fst = \ _ _ -> fst #-}
-{-# COMPILE GHC snd = \ _ _ -> snd #-}
 
 {-# COMPILE GHC stdInput = stdInput #-}
 {-# COMPILE GHC stdOutput = stdOutput #-}
